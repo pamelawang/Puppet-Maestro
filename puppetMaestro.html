@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <!--
 SOURCES:
-http://www.html5canvastutorials.com/advanced/html5-canvas-ovals/
+1. http://www.html5canvastutorials.com/advanced/html5-canvas-ovals/
 
 We used this to figure how to create ovals - namely by using the scale method. 
+
+2. http://stackoverflow.com/questions/19578456/transparent-color-html5-canvas
+
+We used this source to figure how to make our background transparent
+
+3. http://www.w3schools.com/tags/canvas_lineto.asp
+
+We used this source to figure out how to draw a line
 
 -->
 
@@ -20,7 +28,7 @@ We used this to figure how to create ovals - namely by using the scale method.
 <script src="https://js.leapmotion.com/leap-plugins-0.1.11-utils.js"></script> -->
 </head>
 
-<body>
+<body style="background-color:black;">
 <canvas id="scene"></canvas>
 <script>
 
@@ -29,22 +37,56 @@ var canvas = document.getElementById('scene');
 
 //Ask why moving these instructions from header to here made a difference
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight; 
+canvas.height = window.innerHeight;
+
 var ctx = canvas.getContext('2d');   
+ 
+
 // Get the canvas width and height
 var width = canvas.width, height = canvas.height;
+var base_wid = width/2; /* assumed that this is alr divided by 2 */
+var base_ht = height/2; 
 
 // Name some colors
 var red = '#F00', green = '#0F0', blue = '#00F', purple = '#A0F';
+
+
 // Create an array to save circle properties
 var circles = [ ];
 
-function drawCircle(center, radius, color, fill, scaleX, scaleY) {
+function drawBackground() {
+
+var back = canvas.getContext('2d');
+
+back.moveTo(0,0); 
+back.lineTo(width, 0); 
+back.lineTo(width, height); 
+back.lineTo(0, height); 
+
+back.fillStyle = "black"; 
+back.fill(); 
+
+back.stroke(); 
+
+}
+
+function drawCircle(center, color, fill, change) {
   // Make an closed arc with a complete rotation
-  ctx.scale(scaleX, scaleY); 
+  
   ctx.beginPath();
-  ctx.arc(width/2, height/2, radius, 0, 2*Math.PI);
+  
+  ctx.moveTo(base_wid - change,base_ht - change);
+  console.log(base_wid);
+  console.log(base_ht); 
+  ctx.quadraticCurveTo(base_wid*0.75, base_ht*0.3,base_wid + change,base_ht - change); 
+  ctx.quadraticCurveTo(base_wid*1.7, base_ht *1.2, base_wid + change,base_ht + change);
+  ctx.quadraticCurveTo(base_wid *1.2, base_ht*1.8, base_wid - change,base_ht + change);
+  ctx.quadraticCurveTo(base_wid/4, base_ht*1.2, base_wid - change,base_ht - change);
+  ctx.closePath(); 
+
   ctx.stroke();  
+  
+  
   ctx.lineWidth = 4;
   // Choose whether to fill or outline the circle
   if (fill) {
@@ -57,12 +99,16 @@ function drawCircle(center, radius, color, fill, scaleX, scaleY) {
 }
 
 // Create a Leap controller to access frame data
+
 var controller = new Leap.Controller();
 
 // Register a callback to process frame data
 controller.on('frame', function(frame) {
   // Clear the canvas so we can repaint
   ctx.clearRect(0, 0, width, height);
+  
+  //Continually sets the background to be black 
+  //drawBackground(); 
   
   //Make sure we have accumulated at most 200 circles
   if (circles.length > 5) {
@@ -73,32 +119,36 @@ controller.on('frame', function(frame) {
   // Draw finger tips as colored circles
   for (var h = 0; h < frame.hands.length; h = h+1) {
     var hand = frame.hands[h];
-    // Calculate the circle center and radius
-    //var center = leapToScene(hand.palmPosition);
-   
-   
-    var radius = Math.abs(hand.palmPosition[1]);
-    
-    color = green; 
-    fill = true;
 
+	//Sets up what the shape will look like. 
+   	color = green; 
+    fill = true;
+    
+   	//The following line of code decreases/increases the size of the shape(s) 
+   	//depending on the height of the hand. 
+    var imageScale = Math.abs(hand.palmPosition[1]);
+    
+    
+	
+	//Changes the color of the circle when the user makes a fist 
     if(hand.grabStrength > 0.8) {
     color = red;
-   
+    ctx.globalAlpha = 1; 
     }
-
     
+    ctx.globalAlpha = 1 - hand.pinchStrength; 
     
-    /*
-    Take care to make sure that actions are supposed to be distinct  actually 
+    /* REMINDER: Take care to make sure that actions are supposed to be distinct actually 
     are distinct- i.e - color change and unfill don't happen at the same time.  
     */
+    
+    //Creates an outline of the shape if the hand is facing up. 
     if(hand.roll() > 2) {
     fill = false; 
     
     }
 
-    drawCircle([width/2, height/2], radius, color, fill,1,1);
+    drawCircle([width/2, height/2], color, fill, imageScale/1.25);
     
   }
   
