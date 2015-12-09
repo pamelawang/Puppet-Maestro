@@ -1,4 +1,4 @@
-1<!DOCTYPE html>
+<!DOCTYPE html>
 
 
 
@@ -16,14 +16,23 @@
 </head>
 
 <body>
-<canvas id="scene" width="800" height="600"></canvas>
+<canvas id="scene"></canvas>
 <script>
 
 // Get the canvas and a 2-dimensional drawing context
 var canvas = document.getElementById('scene');
-var ctx = canvas.getContext('2d');
+
+//Ask why moving these instructions from header to here made a difference
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight; 
+var ctx = canvas.getContext('2d');   
 // Get the canvas width and height
 var width = canvas.width, height = canvas.height;
+
+// Name some colors
+var red = '#F00', green = '#0F0', blue = '#00F', purple = '#A0F';
+// Create an array to save circle properties
+var circles = [ ];
 
 // Draw a circle with the given parameters:
 //   center: float array [x, y]
@@ -33,22 +42,30 @@ var width = canvas.width, height = canvas.height;
 function drawCircle(center, radius, color, fill) {
   // Make an closed arc with a complete rotation
   ctx.beginPath();
-  ctx.arc(center[0], center[1], radius, 0, 2*Math.PI);
-  ctx.stroke();
+  //console.log("center[0] is " + center[0]);
+  //console.log("center[1] is " + center[1]);
+  //console.log("radius is " + radius);
+  ctx.arc(width/2, height/2, radius, 0, 2*Math.PI);
+  ctx.stroke();  
   ctx.lineWidth = 4;
   // Choose whether to fill or outline the circle
-  ctx.fillStyle = color;
-  ctx.fill();
-
+  if (fill) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
 }
 
 // Transform Leap coordinates to canvas scene coordinates
-function leapToScene(position) {
+/*function leapToScene(position) {
   var x = position[0];
   var y = position[1];
   // Shift the Leap origin to the canvas's bottom center and invert the y-axis
   return [width/2 + x, height - y];
 }
+*/
 
 // Create a Leap controller to access frame data
 var controller = new Leap.Controller();
@@ -57,26 +74,95 @@ var controller = new Leap.Controller();
 controller.on('frame', function(frame) {
   // Clear the canvas so we can repaint
   ctx.clearRect(0, 0, width, height);
-   
-  // Draw a green circle to test the canvas
-  //drawCircle([width/2, 50], 20, green);
+ 
+ 
+  //Draw a green circle to test the canvas
+  
+  /*
+  if(hand.valid == true) {
+  console.log("true"); 
+  drawCircle([width/2, height/2], 20, green);
+  
+  }
+  */
+  
+  /*
+  // Make sure we have accumulated at most 200 circles
+  if (circles.length > 200) {
+    circles = circles.slice(-200); // Last 200 circles
+  } //probably for fading 
+  */
+  
+  
+  //Currently, the circle changes to green when it redrawn 
+  for (var c = 0; c < circles.length; c = c+1) {
+    // Retrieve the circle properties
+    var center = circles[c].center;
+    var radius = circles[c].radius;
 
+    // Redraw the circle filled in purple
+    drawCircle(center, radius, green, true);
+  }
+  
+  /*
+  // Draw finger tips as colored circles
+  for (var f = 0; f < frame.fingers.length; f = f+1) {
+    var finger = frame.fingers[f];
+    // Calculate the circle center and radius
+    var center = leapToScene(finger.tipPosition);
+    var radius = Math.abs(finger.touchDistance) * 30;
+    // Determine if the finger is touching or not
+
+      color = red;
+      fill = true;
+      // Save the circle properties to redraw it later
+      var circle = {center: center, radius: radius};
+      circles.push(circle);
+  
+    // Finally, draw the circle
+    drawCircle(center, radius, color, fill);
+  }
+  */
+  
+  
   
   // Draw finger tips as colored circles
-  for (var h = 0; h  < frame.hands.length; h = h+1) {
+  for (var h = 0; h < frame.hands.length; h = h+1) {
     var hand = frame.hands[h];
     // Calculate the circle center and radius
-    var center = leapToScene(hand.palmPosition);
-    var radius = 20; 
-    var color = DDDDDD;
+    //var center = leapToScene(hand.palmPosition);
+    var radius = 25;
+    // Determine if the finger is touching or not
+
+      color = red;
+      fill = true;
+      // Save the circle properties to redraw it later
+      var circle = {center: center, radius: radius};
+      circles.push(circle);
+  
     // Finally, draw the circle
-    drawCircle(center, radius, color, true);
+    
+    //Just in case we forget, [width/2, height/2] may be the cause of the undefined error 
+    //on line 45 
+    drawCircle([width/2, height/2], radius, color, fill);
+    
   }
+
+/*
+QUESTIONS:
+
+How do we differentiate between the hands?
+Do we want two circles for two hands? 
+- Focus on one hand 
+
+
+
+*/
+  
 });
 
 // Connect the controller to start receiving data
 controller.connect();
-
 
 </script>
 
