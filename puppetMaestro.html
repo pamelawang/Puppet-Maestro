@@ -48,7 +48,7 @@ var base_wid = width/2; /* assumed that this is alr divided by 2 */
 var base_ht = height/2; 
 
 // Name some colors
-var red = '#F00', green = '#0F0', blue = '#00F', purple = '#A0F';
+var red = '#F00', green = '#8EBF29', blue = '#75D3FD', pink = '#ED1566';
 
 
 // Create an array to save circle properties
@@ -76,8 +76,6 @@ function drawCircle(center, color, fill, change) {
   ctx.beginPath();
   
   ctx.moveTo(base_wid - change,base_ht - change);
-  console.log(base_wid);
-  console.log(base_ht); 
   ctx.quadraticCurveTo(base_wid*0.75, base_ht*0.3,base_wid + change,base_ht - change); 
   ctx.quadraticCurveTo(base_wid*1.7, base_ht *1.2, base_wid + change,base_ht + change);
   ctx.quadraticCurveTo(base_wid *1.2, base_ht*1.8, base_wid - change,base_ht + change);
@@ -138,15 +136,49 @@ controller.on('frame', function(frame) {
     
     ctx.globalAlpha = 1 - hand.pinchStrength; 
     
-    /* REMINDER: Take care to make sure that actions are supposed to be distinct actually 
-    are distinct- i.e - color change and unfill don't happen at the same time.  
-    */
+	/* REMINDER: Take care to make sure that actions are supposed to be distinct actually 
+	are distinct- i.e - color change and unfill don't happen at the same time.  
+	*/
     
-    //Creates an outline of the shape if the hand is facing up. 
+	//Creates an outline of the shape if the hand is facing up. 
     if(hand.roll() > 2) {
     fill = false; 
     
     }
+ 	 
+	//Here we track the velocity of the user's hands
+   if(frame.valid && frame.pointables.length > 0){
+    frame.gestures.forEach(function(gesture){
+        if(gesture.type == "swipe"){
+  			var velocity = gesture.speed;
+  			console.log(velocity); 
+  			
+  				
+  				/*
+  				If the conducting speed is slow, the shape's color is green 
+  				
+  				If the conducting speed is normal, the shape's color is blue 
+  				
+  				If the conducting speed is fast, the shape's color is pink
+  				
+  				*/
+  				if ((velocity < 150) || (velocity == 150)) {
+ 					color = green; 
+ 	
+ 				} else if ((velocity > 150) && (velocity < 350)){
+ 					color = blue; 
+ 	
+ 				} else  {
+ 					color = pink; 
+ 	
+ 				}
+  			
+			}
+         
+        });
+        
+    } //end of code for tracking speed
+  
 
     drawCircle([width/2, height/2], color, fill, imageScale/1.25);
     
